@@ -3,6 +3,7 @@ from .models import Post, Group, User
 from .forms import PostForm
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user
 
 
 NUMBER_OF_POST = 10
@@ -51,10 +52,12 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     posts = Post.objects.get(id=post_id)
+    title = posts.text[:30]
     posts_number = Post.objects.filter(author=posts.author).count()
     context = {
         'post_num': posts_number,
-        'post': posts
+        'post': posts,
+        'title': title,
     }
     template = 'posts/post_detail.html'
     return render(request, template, context)
@@ -62,39 +65,38 @@ def post_detail(request, post_id):
 
 @login_required
 def post_create(request):
-    form = PostForm(request.POST or None)
+    template = 'posts/create_post.html'
+    user = get_user(request)
+    if request.method == 'POST':
+        form = PostForm(request.POST or None)
+        if form.is_valid():
+            frm = form.save(commit=False)
+            frm.author = user
+            frm.save()
+            return redirect(f'/profile/{user.username}/')
+    form = PostForm(files=request.FILES or None)
     context = {
         'form': form,
+        'is_edit': False,
     }
-    if request.method != "POST":
-        return render(request, "posts/create_post.html", context)
-    if not form.is_valid():
-        return render(request, "posts/create_post.html", context)
-    post = form.save(commit=False)
-    post.author = request.user
-    post.save()
-    return redirect("posts:profile", username=request.user.username)
+    return render(request, template, context)
 
 
 @login_required
 def post_edit(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
-    if post.author != request.user:
-        return redirect(
-            'posts:post_detail', post_id
-        )
-    form = PostForm(
-        request.POST or None,
-        instance=post
-    )
-    if form.is_valid():
-        form.save()
-        return redirect(
-            'posts:post_detail', post_id
-        )
+    form = PostForm(request.POST or None, instance=post)
+    template = 'posts/create_post.html'
+
+    if request.method == 'POST':
+        if request.user != post.author:
+            return redirect('posts:post_detail', post_id=post.id)
+        if form.is_valid():
+            form.save()
+            return redirect(f'/posts/{post_id}/')
     context = {
         'form': form,
         'is_edit': True,
         'post': post,
     }
-    return render(request, 'posts/create_post.html', context)
+    return render(request, template, context)

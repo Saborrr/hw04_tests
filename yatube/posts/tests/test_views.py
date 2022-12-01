@@ -32,32 +32,50 @@ class PostPagesTests(TestCase):
             self.assertEqual(post.author, self.post.author)
             self.assertEqual(post.group, self.post.group)
 
-    def index_page_contains_page_obj(self):
-        """Вывод page_obj на главной странице"""
+    def test_index_page_contains_page_obj(self):
+        """Проверка контекста на главной странице."""
         responce = self.authorized_client.get(reverse('posts:index'))
         self.check_post_info(responce.context['page_obj'][0])
-        """Вывод page_obj на странице group_list.html"""
+
+    def test_page_obj_on_group_list(self):
+        """Проверка контекста на странице группы."""
         responce = self.authorized_client.get(
             reverse(
                 'posts:group_list',
                 kwargs={'slug': self.group.slug})
         )
         self.assertEqual(responce.context['group'], self.group)
-        self.check_post_info(responce.context['page_obj'][0])
 
     def test_profile_page_contains_auth_page_profile(self):
-        """Вывод 'auth' и 'page_obj' в profile.html"""
+        """Проверка контекста в профиле."""
         responce = self.authorized_client.get(
             reverse('posts:profile', kwargs={'username': self.user.username})
         )
         self.assertEqual(responce.context['author'], self.user)
-        # self.check_post_info(responce.context['page_obj'][0])
 
-        """Вывод 'post' на post_detail.html"""
+    def test_post_on_post_detail(self):
+        """Проверка контекста на странице описания поста."""
         responce = self.authorized_client.get(
             reverse('posts:post_detail', kwargs={'post_id': self.post.id})
         )
-        # self.check_post_info(responce.context['post'])
+        self.assertEqual(responce.context['post'], self.post)
+        self.check_post_info(responce.context['post'])
+
+    def test_check_index_group_list_profile_after_create_post(self):
+        """Проверка, что пост не попал в группу, для которой не предназначен"""
+        posts_count = Post.objects.count()
+        form_data = {
+            'text': 'Текст, добавленный из формы',
+            'group': self.group.id
+        }
+        response = self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+            follow=True
+        )
+        self.assertEqual(Post.objects.count(), posts_count + 1)
+        self.assertRedirects(response, reverse(
+            'posts:profile', kwargs={'username': self.user}))
 
 
 class PaginatorViewsTest(TestCase):

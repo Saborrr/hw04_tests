@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 from ..models import Group, Post
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 User = get_user_model()
 
@@ -11,13 +10,15 @@ class PostCreateFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        # Создание авторизованного пользователя
-        cls.user = User.objects.create_user(username='IvanIvanov')
+        # Создание пользователей
+        cls.user = User.objects.create_user(username='auth')
+        cls.guest_client = Client()
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
+
         # Создание группы в БД
         cls.group = Group.objects.create(
-            title=('Заголовок для тестовой группы'),
+            title='Заголовок для тестовой группы',
             slug='slug',
             description='Тестовое описание'
         )
@@ -28,18 +29,26 @@ class PostCreateFormTests(TestCase):
             group=cls.group,
         )
 
-    def create_post(self):
+    def test_guest_new_post(self):
+        # Неавторизованный пользователь не может создавать посты
+        form_data = {
+            'text': 'Пост от неавторизованного пользователя',
+            'group': self.group.id
+        }
+        self.guest_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+            follow=True,
+        )
+        self.assertFalse(Post.objects.filter(
+            text='Пост от неавторизованного пользователя').exists())
+
+    def test_create_post(self):
         """Если форма валидна, создаем запись в БД"""
         posts_count = Post.objects.count()
-        # Попробовал возможность добавить картинку
-        uploaded = SimpleUploadedFile(
-            name='small.gif',
-            content_type='/image/gif'
-        )
         form_data = {
-            'text': 'Данные из формы',
+            'text': 'Тестовое описание',
             'group': self.group.pk,
-            'image': uploaded,
         }
         response = self.authorized_client.post(
             reverse('posts:post_create'),
@@ -54,9 +63,26 @@ class PostCreateFormTests(TestCase):
         )
         self.assertEqual(Post.objects.count(), posts_count + 1)
         post = Post.objects.latest('id')
-        self.assertEqual(post.image.name, 'posts/small.gif')
+        self.assertEqual(post.text, 'Тестовое описание')
+        self.assertEqual(post.author.username, 'auth')
+        self.assertEqual(post.group.title, 'Заголовок для тестовой группы')
+
+    def test_edit_post(self):
+        """Авторизованный пользователь может редактировать пост"""
+        form_data = {
+            'text': 'Новое описание',
+        }
+        url = reverse('posts:post_edit', kwargs={'post_id': 1})
         response = self.authorized_client.post(
-            reverse('posts:post_edit', args=(1,)),
-            data=form_data,
-            follow=True,
+            url, data=form_data, follow=True
         )
+        posts_count = Post.objects.count()
+        self.post.refresh_from_db()
+        self.assertEqual(Post.objects.count(), posts_count)
+        self.assertRedirects(
+            response, reverse(
+                'posts:post_detail',
+                kwargs={'post_id': self.post.id}
+            )
+        )
+        self.assertTrue(Post.objects.filter(text=form_data['text']).exists())
