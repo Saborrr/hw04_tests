@@ -61,21 +61,16 @@ class PostPagesTests(TestCase):
         self.assertEqual(responce.context['post'], self.post)
         self.check_post_info(responce.context['post'])
 
-    def test_check_index_group_list_profile_after_create_post(self):
+    def test_check_group_list_after_create_post(self):
         """Проверка, что пост не попал в группу, для которой не предназначен"""
-        posts_count = Post.objects.count()
-        form_data = {
-            'text': 'Текст, добавленный из формы',
-            'group': self.group.id
-        }
-        response = self.authorized_client.post(
-            reverse('posts:post_create'),
-            data=form_data,
-            follow=True
+        self.group = Group.objects.create(
+            title='Группа 2',
+            slug='slug-2',
+            description='Описание второй группы',
         )
-        self.assertEqual(Post.objects.count(), posts_count + 1)
-        self.assertRedirects(response, reverse(
-            'posts:profile', kwargs={'username': self.user}))
+        response = self.authorized_client.get(reverse(
+            'posts:group_list', kwargs={'slug': self.group.slug}))
+        self.assertNotIn(self.post, response.context['page_obj'])
 
 
 class PaginatorViewsTest(TestCase):

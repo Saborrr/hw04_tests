@@ -71,6 +71,9 @@ class PostCreateFormTests(TestCase):
         """Авторизованный пользователь может редактировать пост"""
         form_data = {
             'text': 'Новое описание',
+            'group': self.group.pk,
+            'author': self.user.pk,
+            'id': self.post.id,
         }
         url = reverse('posts:post_edit', kwargs={'post_id': 1})
         response = self.authorized_client.post(
@@ -86,3 +89,7 @@ class PostCreateFormTests(TestCase):
             )
         )
         self.assertTrue(Post.objects.filter(text=form_data['text']).exists())
+        self.assertTrue(Post.objects.filter(group=form_data['group']).exists())
+        self.assertTrue(Post.objects.filter(
+            author=form_data['author']).exists())
+        self.assertTrue(Post.objects.filter(id=form_data['id']).exists())

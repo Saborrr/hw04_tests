@@ -144,3 +144,6 @@ dmypy.json
 .history/
 
 .mypy_cache
+
+# media files, images and etc.
+media/

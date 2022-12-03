@@ -23,12 +23,12 @@ class PostModelTest(TestCase):
 
     def test_models_have_correct_names_group(self):
         """Проверяем, что у моделей корректно работает title"""
-        task = PostModelTest.group
-        expected_value = task.title
-        self.assertEqual(expected_value, str(task))
+        check = PostModelTest.group
+        expected_value = check.title
+        self.assertEqual(expected_value, str(check))
 
     def test_models_have_correct_names_post(self):
         """Проверяем, что у поста 15 символов"""
-        task = PostModelTest.post
-        expected_value = task.text[:15]
-        self.assertEqual(expected_value, str(task))
+        check = PostModelTest.post
+        expected_value = check.text[:15]
+        self.assertEqual(expected_value, str(check))
