@@ -61,7 +61,7 @@ class PostCreateFormTests(TestCase):
                     'username': PostCreateFormTests.post.author}
             )
         )
-        self.assertEqual(Post.objects.count(), posts_count + 1)
+        self.assertEqual(Post.objects.count(), posts_count + self.post.pk)
         post = Post.objects.latest('id')
         self.assertEqual(post.text, 'Тестовое описание')
         self.assertEqual(post.author.username, 'auth')
@@ -72,10 +72,8 @@ class PostCreateFormTests(TestCase):
         form_data = {
             'text': 'Новое описание',
             'group': self.group.pk,
-            'author': self.user.pk,
-            'id': self.post.id,
         }
-        url = reverse('posts:post_edit', kwargs={'post_id': 1})
+        url = reverse('posts:post_edit', kwargs={'post_id': self.post.pk})
         response = self.authorized_client.post(
             url, data=form_data, follow=True
         )
@@ -88,8 +86,11 @@ class PostCreateFormTests(TestCase):
                 kwargs={'post_id': self.post.id}
             )
         )
-        self.assertTrue(Post.objects.filter(text=form_data['text']).exists())
-        self.assertTrue(Post.objects.filter(group=form_data['group']).exists())
         self.assertTrue(Post.objects.filter(
-            author=form_data['author']).exists())
-        self.assertTrue(Post.objects.filter(id=form_data['id']).exists())
+            # Проверяем 2 поля, так как выше в форме только 2 поля поста
+            # Надеюсь все правильно сделал
+            text=form_data['text'],
+            group=form_data['group'],
+            id=self.post.pk,
+            author=self.post.author
+        ).exists())
