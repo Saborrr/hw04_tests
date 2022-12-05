@@ -2,8 +2,17 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 from ..models import Group, Post
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 
 User = get_user_model()
+
+SMALL_GIF = (b'\x47\x49\x46\x38\x39\x61\x02\x00'
+             b'\x01\x00\x80\x00\x00\x00\x00\x00'
+             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+             b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+             b'\x0A\x00\x3B')
 
 
 class PostCreateFormTests(TestCase):
@@ -46,9 +55,14 @@ class PostCreateFormTests(TestCase):
     def test_create_post(self):
         """Если форма валидна, создаем запись в БД"""
         posts_count = Post.objects.count()
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=SMALL_GIF,
+            content_type='image/gif')
         form_data = {
             'text': 'Тестовое описание',
             'group': self.group.pk,
+            'image': uploaded,
         }
         response = self.authorized_client.post(
             reverse('posts:post_create'),
@@ -69,9 +83,14 @@ class PostCreateFormTests(TestCase):
 
     def test_edit_post(self):
         """Авторизованный пользователь может редактировать пост"""
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=SMALL_GIF,
+            content_type='image/gif')
         form_data = {
             'text': 'Новое описание',
             'group': self.group.pk,
+            'image': uploaded,
         }
         url = reverse('posts:post_edit', kwargs={'post_id': self.post.pk})
         response = self.authorized_client.post(
@@ -87,10 +106,8 @@ class PostCreateFormTests(TestCase):
             )
         )
         self.assertTrue(Post.objects.filter(
-            # Проверяем 2 поля, так как выше в форме только 2 поля поста
-            # Надеюсь все правильно сделал
             text=form_data['text'],
             group=form_data['group'],
             id=self.post.pk,
-            author=self.post.author
+            author=self.post.author,
         ).exists())

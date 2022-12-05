@@ -118,3 +118,10 @@ class PostURLTests(TestCase):
         for template, adress in guest_redirected:
             response = self.guest_client.get(template, follow=True)
             self.assertRedirects(response, adress)
+
+
+class ViewTestClass(TestCase):
+    def test_error_page_404(self):
+        response = self.client.get('/nonexist-page/')
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, 'core/404.html')

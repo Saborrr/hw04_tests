@@ -1,7 +1,10 @@
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from ..models import Group, Post
+from django.core.files.uploadedfile import SimpleUploadedFile
+import tempfile
+from django.conf import settings
 
 
 User = get_user_model()
@@ -12,6 +15,18 @@ class PostPagesTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='auth')
+        cls.small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00'
+            b'\x01\x00\x00\x00\x00\x21\xf9\x04'
+            b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
+            b'\x00\x00\x01\x00\x01\x00\x00\x02'
+            b'\x02\x4c\x01\x00\x3b'
+        )
+        cls.uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=cls.small_gif,
+            content_type='image/gif'
+        )
         cls.group = Group.objects.create(
             title='Группа',
             slug='slug',
@@ -20,6 +35,7 @@ class PostPagesTests(TestCase):
         cls.post = Post.objects.create(
             author=User.objects.create_user(username='test_user'),
             text='Тестовый пост',
+            image=cls.uploaded,
         )
 
     def setUp(self):
@@ -31,6 +47,7 @@ class PostPagesTests(TestCase):
             self.assertEqual(post.text, self.post.text)
             self.assertEqual(post.author, self.post.author)
             self.assertEqual(post.group, self.post.group)
+            self.assertEqual(post.image, self.post.image)
 
     def test_index_page_contains_page_obj(self):
         """Проверка контекста на главной странице."""
@@ -83,13 +100,11 @@ class PaginatorViewsTest(TestCase):
             slug='slug',
             description='Описание группы',
         )
-        cls.post = []
-        for i in range(15):
-            Post.objects.create(
-                text=f'Пост № {i}',
-                author=cls.user,
-                group=cls.group,
-            )
+        cls.post = Post.objects.bulk_create(Post(
+            author=cls.user,
+            text=f'Тестовый пост{i}',
+            group=cls.group,
+            id=f'{i}') for i in range(15))
 
     def setUp(self):
         self.unauthorized_client = Client()
