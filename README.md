@@ -3,10 +3,6 @@
 ## Стек: 
 - Python
 - Django
-- PostgresQL
-- Gunicorn
-- Nginx
-- Яндекс.Облако (Ubuntu)
 - Pytest
 
 Проект разработан по классической MVT архитектуре. 
