@@ -3,7 +3,7 @@
 {% block content %}
 {% comment %} Колонки с отступом сверху и снизу {% endcomment %}
 <div class="row">
-  <h1><center> Вот что я умею </center></h1>
+  <h2><left> Могу, умею, практикую: </left></h2>
   {% comment %}
     Боковой блок со списком технологий 
     Займет всю ширину блока на мобильном
@@ -11,14 +11,17 @@
   {% endcomment %}
   <aside class="col-12 col-md-3">
     <ul class="list-group list-group-flush">
-      <li class="list-group-item">
-        Python
-      </li>
-      <li class="list-group-item">
-        Django
-      </li>
-      <li class="list-group-item">
-        И, пока что, ничего больше...
+      <li class="list-group-item"><strong>
+        <ul>
+          <li> Python </li>
+          <li> Django </li>
+          <li> API </li>
+          <li> PostgresQL </li>
+          <li> SQLite </li>
+          <li> Gunicorn </li>
+          <li> Nginx </li>
+          <li> Яндекс.Облако (Ubuntu) </li>
+          <li> Pytest </li></strong>
       </li>
     </ul>
   </aside>
@@ -27,8 +30,5 @@
     Займет всю ширину блока на мобильном
     и 75% при размерах экрана ≥768px
   {% endcomment %}
-  <article class="col-12 col-md-9">
-    <p>Текст страницы "Технологии" ...как-нибудь допилю...</p>
-  </article>
 </div>
 {% endblock %} 

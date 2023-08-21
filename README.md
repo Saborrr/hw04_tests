@@ -1,3 +1,15 @@
-# hw04_tests
+## "Yatube" - социальная сеть для публикации дневников.
 
-[![CI](https://github.com/yandex-praktikum/hw04_tests/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw04_tests/actions/workflows/python-app.yml)
+## Стек: 
+- Python
+- Django
+- PostgresQL
+- Gunicorn
+- Nginx
+- Яндекс.Облако (Ubuntu)
+- Pytest
+
+Проект разработан по классической MVT архитектуре. 
+Используется пагинация постов и кэширование. 
+Регистрация реализована с верификацией данных, сменой и восстановлением пароля через почту. 
+Написаны тесты, проверяющие работу сервиса.
